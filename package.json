@@ -1,0 +1,72 @@
+{
+  "name": "quartz-image-grid-captions",
+  "version": "0.1.0",
+  "description": "Equal-height, uncropped image rows with Obsidian-compatible captions for Quartz v5.",
+  "type": "module",
+  "license": "MIT",
+  "author": "hyodo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyodoarch/quartz-image-grid-captions.git"
+  },
+  "homepage": "https://github.com/hyodoarch/quartz-image-grid-captions#readme",
+  "bugs": {
+    "url": "https://github.com/hyodoarch/quartz-image-grid-captions/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "TESTING.md",
+    "docs",
+    "examples"
+  ],
+  "scripts": {
+    "build": "node build.mjs && tsc --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:integration": "node test/integration.mjs",
+    "check": "npm run typecheck && npm run build && npm test"
+  },
+  "dependencies": {
+    "@quartz-community/types": "^0.3.0",
+    "@quartz-community/utils": "^0.1.0",
+    "github-slugger": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/hast": "^3.0.4",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^24.10.0",
+    "esbuild": "^0.27.0",
+    "hast-util-to-html": "^9.0.5",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "unified": "^11.0.5",
+    "vfile": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "quartz": {
+    "name": "image-grid-captions",
+    "displayName": "Image Grid Captions",
+    "category": "transformer",
+    "version": "0.1.0",
+    "quartzVersion": ">=5.0.0",
+    "dependencies": [],
+    "defaultOrder": 70,
+    "defaultEnabled": true,
+    "defaultOptions": {}
+  }
+}
