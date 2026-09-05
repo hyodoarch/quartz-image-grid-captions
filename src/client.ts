@@ -1,5 +1,95 @@
 import { mountGrid } from "./shared/renderer";
 
+const ZOOM_BUTTON_CLASS = "image-grid-captions__zoom";
+
+type Lightbox = {
+  open: (image: HTMLImageElement, trigger: HTMLButtonElement) => void;
+};
+
+const lightboxes = new WeakMap<Document, Lightbox>();
+
+function getLightbox(doc: Document): Lightbox {
+  const existing = lightboxes.get(doc);
+  if (existing) return existing;
+
+  const overlay = doc.createElement("div");
+  overlay.className = "image-grid-captions__lightbox";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", "画像の拡大表示");
+  overlay.hidden = true;
+
+  const image = doc.createElement("img");
+  image.className = "image-grid-captions__lightbox-image";
+
+  const closeButton = doc.createElement("button");
+  closeButton.className = "image-grid-captions__lightbox-close";
+  closeButton.type = "button";
+  closeButton.setAttribute("aria-label", "拡大表示を閉じる");
+  closeButton.textContent = "×";
+
+  overlay.append(image, closeButton);
+  doc.body.append(overlay);
+
+  let trigger: HTMLButtonElement | null = null;
+  let previousOverflow = "";
+  const close = () => {
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    image.removeAttribute("src");
+    image.alt = "";
+    doc.body.style.overflow = previousOverflow;
+    trigger?.focus();
+    trigger = null;
+  };
+  closeButton.addEventListener("click", close);
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) close();
+  });
+  doc.addEventListener("keydown", event => {
+    if (!overlay.hidden && event.key === "Escape") close();
+  });
+
+  const lightbox = {
+    open(source: HTMLImageElement, sourceTrigger: HTMLButtonElement) {
+      trigger = sourceTrigger;
+      previousOverflow = doc.body.style.overflow;
+      image.src = source.currentSrc || source.src;
+      image.alt = source.alt;
+      overlay.hidden = false;
+      doc.body.style.overflow = "hidden";
+      closeButton.focus();
+    },
+  };
+  lightboxes.set(doc, lightbox);
+  return lightbox;
+}
+
+function addZoomControls(row: HTMLElement): () => void {
+  const doc = row.ownerDocument;
+  row.querySelectorAll<HTMLElement>(".image-grid-captions__item").forEach(figure => {
+    if (figure.querySelector(`.${ZOOM_BUTTON_CLASS}`)) return;
+    const source = figure.querySelector<HTMLImageElement>(".image-grid-captions__image");
+    if (!source) return;
+    const button = doc.createElement("button");
+    button.className = ZOOM_BUTTON_CLASS;
+    button.type = "button";
+    button.setAttribute("aria-label", source.alt ? `画像を拡大: ${source.alt}` : "画像を拡大");
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 4a5.5 5.5 0 1 0 3.47 9.77L18.2 19 19 18.2l-5.23-5.23A5.5 5.5 0 0 0 9.5 4Zm0 1.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm-.75 1.75v1.5h-1.5v1.5h1.5v1.5h1.5v-1.5h1.5v-1.5h-1.5v-1.5h-1.5Z"/></svg>';
+    figure.append(button);
+  });
+  const onClick = (event: MouseEvent) => {
+    const target = event.target;
+    if (!(target instanceof row.ownerDocument.defaultView!.Element)) return;
+    const button = target.closest<HTMLButtonElement>(`.${ZOOM_BUTTON_CLASS}`);
+    if (!button || !row.contains(button)) return;
+    const image = button.parentElement?.querySelector<HTMLImageElement>(".image-grid-captions__image");
+    if (image) getLightbox(doc).open(image, button);
+  };
+  row.addEventListener("click", onClick);
+  return () => row.removeEventListener("click", onClick);
+}
+
 // One observer also covers Quartz popovers/transclusions added after SPA navigation.
 const active = new Map<HTMLElement, () => void>();
 function scan() {
@@ -7,7 +97,11 @@ function scan() {
     if (!row.isConnected) { cleanup(); active.delete(row); }
   }
   document.querySelectorAll<HTMLElement>(".image-grid-captions").forEach(row => {
-    if (!active.has(row)) active.set(row, mountGrid(row));
+    if (!active.has(row)) {
+      const cleanupGrid = mountGrid(row);
+      const cleanupZoom = addZoomControls(row);
+      active.set(row, () => { cleanupZoom(); cleanupGrid(); });
+    }
   });
 }
 const observer = new MutationObserver(scan);

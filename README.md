@@ -1,4 +1,4 @@
-# Quartz Image Grid Captions 0.1.0
+# Quartz Image Grid Captions 0.2.0
 
 Obsidian版 Image Grid Captions と同一の fenced code block で、画像を高さ一定・トリミングなしの1行に表示する **Quartz v5 Transformer** です。関数名とTransformer名は `ImageGridCaptions` です。
 
@@ -84,6 +84,12 @@ Quartzの `@quartz-community/utils/path` の `transformLink` と `resolveRelativ
 画像読み込み後、自然な縦横比から共通高さを計算し、ResizeObserverで幅の変更に追従します。固定gapで1行を維持し、トリミングしません。gap合計以下の幅では一時エラーを表示し、幅が戻れば復帰します。フォントと色はテーマを継承します。
 
 画像寸法取得とレスポンシブ描画にはJavaScriptが必要です。QuartzのSPA遷移と動的に追加されたDOMにも対応します。
+
+## 画像の拡大表示
+
+グリッド内の画像にマウスを重ねると、右上に拡大ボタンが表示されます。ボタンを押すと画像を黒い背景の上に縦横比を保ったまま拡大表示します。背景、右上の閉じるボタン、または `Esc` キーで閉じられます。タッチ端末では拡大ボタンを常時表示します。
+
+この機能の対象は `image-grid-captions` ブロック内の画像だけです。通常のMarkdown画像や `quartz-image-captions` の表示・操作には影響しません。
 
 ## 検証・開発
 

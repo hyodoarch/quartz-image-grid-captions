@@ -1,6 +1,6 @@
 {
   "name": "quartz-image-grid-captions",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Equal-height, uncropped image rows with Obsidian-compatible captions for Quartz v5.",
   "type": "module",
   "license": "MIT",
@@ -62,7 +62,7 @@
     "name": "image-grid-captions",
     "displayName": "Image Grid Captions",
     "category": "transformer",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "quartzVersion": ">=5.0.0",
     "dependencies": [],
     "defaultOrder": 70,

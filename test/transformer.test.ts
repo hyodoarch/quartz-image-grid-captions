@@ -61,6 +61,8 @@ test("ambiguous basenames follow Quartz root fallback, then fail if absent", () 
 test("resources contain CSS and persistent SPA client", () => {
   const resources = ImageGridCaptions().externalResources!(ctx)!;
   assert.match(resources.css![0].content, /object-fit: contain/);
+  assert.match(resources.css![0].content, /image-grid-captions__lightbox/);
+  assert.match(resources.js![0].script, /image-grid-captions__zoom/);
   assert.equal(resources.js![0].spaPreserve, true);
   assert.equal(resources.js![0].contentType, "inline");
 });
