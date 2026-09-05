@@ -3,14 +3,20 @@ import { mountGrid } from "./shared/renderer";
 const ZOOM_BUTTON_CLASS = "image-grid-captions__zoom";
 
 type Lightbox = {
+  element: HTMLElement;
   open: (image: HTMLImageElement, trigger: HTMLButtonElement) => void;
+  destroy: () => void;
 };
 
 const lightboxes = new WeakMap<Document, Lightbox>();
 
 function getLightbox(doc: Document): Lightbox {
   const existing = lightboxes.get(doc);
-  if (existing) return existing;
+  if (existing?.element.isConnected) return existing;
+  if (existing) {
+    existing.destroy();
+    lightboxes.delete(doc);
+  }
 
   const overlay = doc.createElement("div");
   overlay.className = "image-grid-captions__lightbox";
@@ -46,11 +52,13 @@ function getLightbox(doc: Document): Lightbox {
   overlay.addEventListener("click", event => {
     if (event.target === overlay) close();
   });
-  doc.addEventListener("keydown", event => {
+  const onKeydown = (event: KeyboardEvent) => {
     if (!overlay.hidden && event.key === "Escape") close();
-  });
+  };
+  doc.addEventListener("keydown", onKeydown);
 
   const lightbox = {
+    element: overlay,
     open(source: HTMLImageElement, sourceTrigger: HTMLButtonElement) {
       trigger = sourceTrigger;
       previousOverflow = doc.body.style.overflow;
@@ -59,6 +67,12 @@ function getLightbox(doc: Document): Lightbox {
       overlay.hidden = false;
       doc.body.style.overflow = "hidden";
       closeButton.focus();
+    },
+    destroy() {
+      if (!overlay.hidden) doc.body.style.overflow = previousOverflow;
+      doc.removeEventListener("keydown", onKeydown);
+      overlay.remove();
+      trigger = null;
     },
   };
   lightboxes.set(doc, lightbox);
@@ -93,6 +107,11 @@ function addZoomControls(row: HTMLElement): () => void {
 // One observer also covers Quartz popovers/transclusions added after SPA navigation.
 const active = new Map<HTMLElement, () => void>();
 function scan() {
+  const lightbox = lightboxes.get(document);
+  if (lightbox && !lightbox.element.isConnected) {
+    lightbox.destroy();
+    lightboxes.delete(document);
+  }
   for (const [row, cleanup] of active) {
     if (!row.isConnected) { cleanup(); active.delete(row); }
   }

@@ -1,4 +1,4 @@
-# Quartz Image Grid Captions 0.2.0
+# Quartz Image Grid Captions 0.2.1
 
 Obsidian版 Image Grid Captions と同一の fenced code block で、画像を高さ一定・トリミングなしの1行に表示する **Quartz v5 Transformer** です。関数名とTransformer名は `ImageGridCaptions` です。
 

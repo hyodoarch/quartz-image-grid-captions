@@ -91,6 +91,8 @@ try {
   await lightbox.waitFor({ state: "hidden" });
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   assert.equal(await zoomButton.evaluate(button => button === document.activeElement), true);
+  // Quartz may remove plugin-created body children while morphing to another page.
+  await lightbox.evaluate(element => element.remove());
   await page.screenshot({ path: "test-results/comparison.png", fullPage: true });
   await page.evaluate(() => {
     const row = document.querySelector("#quartz .image-grid-captions");
@@ -102,12 +104,21 @@ try {
   await page.waitForFunction(() => document.querySelectorAll("#quartz .image-grid-captions__error").length === 1);
   await page.locator("#quartz").evaluate(el => { el.style.width = "400px"; });
   await page.waitForFunction(() => Math.abs([...document.querySelectorAll("#quartz .image-grid-captions img")].reduce((s, img) => s + img.getBoundingClientRect().width, 16) - 400) < 0.2);
+  const spaZoomButton = page.locator("#quartz .image-grid-captions__zoom").first();
+  await spaZoomButton.focus();
+  await spaZoomButton.click();
+  await lightbox.waitFor({ state: "visible" });
+  assert.equal(await page.locator(".image-grid-captions__lightbox").count(), 1);
+  assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
+  await page.keyboard.press("Escape");
+  await lightbox.waitFor({ state: "hidden" });
+  assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   assert.deepEqual(errors, []);
   for (const root of [".", obsidianRoot]) {
     await mkdir(join(root, "examples/images"), { recursive: true });
     for (const [name, data] of Object.entries(pngs)) await writeFile(join(root, "examples/images", `${name}.png`), Buffer.from(data, "base64"));
   }
-  const report = { passed: true, quartzPlugins: plugins.map(p => p.name), comparisonWidths: [800, 320, 160, 1000], sharedSourceIdentical: true, spaReplacement: true, ordinaryImagesPreserved: true, bracketCaptionsPreserved: true, lightbox: true };
+  const report = { passed: true, quartzPlugins: plugins.map(p => p.name), comparisonWidths: [800, 320, 160, 1000], sharedSourceIdentical: true, spaReplacement: true, ordinaryImagesPreserved: true, bracketCaptionsPreserved: true, lightbox: true, lightboxAfterSpaReplacement: true };
   await writeFile("test-results/integration-report.json", JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
 } finally { await browser.close(); }
